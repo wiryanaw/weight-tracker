@@ -383,6 +383,13 @@ nav {
 /* ─── Section title ───────────────────────────────────────────────────────── */
 .section-title { font-size: 11px; font-weight: 600; color: var(--dm); text-transform: uppercase; letter-spacing: .08em; margin: 20px 0 10px; }
 
+/* ─── Pace badge ──────────────────────────────────────────────────────────── */
+.pace-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.pace-ahead  { background: var(--blkbg);  color: var(--blk);  border: 1px solid var(--blkbd); }
+.pace-on     { background: var(--mntbg);  color: var(--mnt);  border: 1px solid var(--mntbd); }
+.pace-behind { background: var(--cutbg);  color: var(--cut);  border: 1px solid var(--cutbd); }
+.pace-passed { background: var(--s3);     color: var(--dm);   border: 1px solid var(--bd); }
+
 /* ─── Reduce motion ───────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 </style>
@@ -931,21 +938,37 @@ function renderDashGoals() {
   el.innerHTML = sorted.map(g => {
     const reached = cw && cw <= g.target;
     const pct = (cw && sw && sw > g.target) ? Math.min(100, Math.max(0, ((sw - cw) / (sw - g.target)) * 100)) : 0;
-    const days = daysToGoal(g.target);
-    let eta = '';
-    if (reached) eta = `<span style="color:var(--blk);font-weight:500">Goal reached</span>`;
-    else if (days !== null && days > 0) {
-      const d = new Date(); d.setDate(d.getDate() + days);
-      eta = `~${days}d · est. ${fmts(d.toISOString().split('T')[0])}`;
-    }
     const fc = reached ? 'done' : pct > 75 ? 'near' : '';
+
+    let paceBadge = '';
+    if (reached) {
+      paceBadge = `<span class="pace-badge pace-ahead">Reached</span>`;
+    } else if (g.dl) {
+      const deadlineDate = new Date(g.dl + 'T00:00:00');
+      const todayDate    = new Date(td() + 'T00:00:00');
+      const daysLeft     = Math.round((deadlineDate - todayDate) / 86400000);
+      if (daysLeft < 0) {
+        paceBadge = `<span class="pace-badge pace-passed">Passed</span>`;
+      } else {
+        const kgLeft  = Math.max(0, (cw || 0) - g.target);
+        const reqRate = daysLeft > 0 ? kgLeft / (daysLeft / 7) : Infinity;
+        const actRate = Math.abs(weeklyRate() || 0.5);
+        if (actRate >= reqRate * 1.05)     paceBadge = `<span class="pace-badge pace-ahead">Ahead</span>`;
+        else if (actRate >= reqRate * 0.9) paceBadge = `<span class="pace-badge pace-on">On track</span>`;
+        else                               paceBadge = `<span class="pace-badge pace-behind">Behind</span>`;
+      }
+    }
+
     return `<div class="progress-wrap">
       <div class="progress-row">
-        <div class="progress-name">${g.name}<span class="badge-neutral" style="margin-left:6px">${g.type}</span></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="progress-name">${g.name}</div>
+          ${paceBadge}
+        </div>
         <div class="progress-info">${g.target} kg</div>
       </div>
       <div class="progress-track"><div class="progress-fill ${fc}" style="width:${pct}%"></div></div>
-      ${eta ? `<div class="progress-eta">${eta}</div>` : ''}
+      ${g.dl ? `<div class="progress-eta"><strong>${fmts(g.dl)}</strong> deadline · ${Math.max(0, Math.round((new Date(g.dl+'T00:00:00') - new Date(td()+'T00:00:00')) / 86400000))}d left</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -1208,17 +1231,46 @@ function renderGoals() {
     let etaHtml = '';
     if (reached) {
       etaHtml = `<div class="alert alert-success" style="margin-top:10px;margin-bottom:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Goal reached!</div>`;
-    } else if (days !== null && days > 0) {
-      const d = new Date(); d.setDate(d.getDate() + days);
-      const dateStr = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-      const wr = weeklyRate();
-      const rateStr = wr ? ` · ${r1(Math.abs(wr))} kg/week avg` : '';
-      etaHtml = `
-        <div class="goal-eta-box">
+    } else if (g.dl) {
+      const deadlineDate = new Date(g.dl + 'T00:00:00');
+      const todayDate    = new Date(td() + 'T00:00:00');
+      const daysLeft     = Math.round((deadlineDate - todayDate) / 86400000);
+      if (daysLeft < 0) {
+        etaHtml = `<div class="goal-eta-box" style="display:flex;align-items:center;justify-content:space-between">
+          <div><div class="goal-eta-title">Deadline</div><div class="goal-eta-val">${fmt(g.dl)}</div></div>
+          <span class="pace-badge pace-passed">Deadline passed</span>
+        </div>`;
+      } else {
+        const kgLeft  = Math.max(0, (cw || 0) - g.target);
+        const reqRate = daysLeft > 0 ? kgLeft / (daysLeft / 7) : Infinity;
+        const actRate = Math.abs(weeklyRate() || 0.5);
+        const wr      = weeklyRate();
+        const rateNote = wr ? `${r1(Math.abs(wr))} kg/wk current` : `0.5 kg/wk (default)`;
+        let paceClass, paceLabel;
+        if (actRate >= reqRate * 1.05)      { paceClass = 'pace-ahead';  paceLabel = 'Ahead of pace'; }
+        else if (actRate >= reqRate * 0.9)  { paceClass = 'pace-on';     paceLabel = 'On track'; }
+        else                                { paceClass = 'pace-behind'; paceLabel = 'Behind pace'; }
+        etaHtml = `<div class="goal-eta-box" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div class="goal-eta-title">Deadline</div>
+            <div class="goal-eta-val">${fmt(g.dl)}</div>
+            <div class="goal-eta-sub">${daysLeft}d left · need ${r1(reqRate)} kg/wk · ${rateNote}</div>
+          </div>
+          <span class="pace-badge ${paceClass}">${paceLabel}</span>
+        </div>`;
+      }
+    } else {
+      if (days !== null && days > 0) {
+        const d = new Date(); d.setDate(d.getDate() + days);
+        const dateStr = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const wr = weeklyRate();
+        const rateStr = wr ? ` · ${r1(Math.abs(wr))} kg/wk avg` : ' · 0.5 kg/wk (default)';
+        etaHtml = `<div class="goal-eta-box">
           <div class="goal-eta-title">Estimated arrival</div>
           <div class="goal-eta-val">${dateStr}</div>
-          <div class="goal-eta-sub">~${days} days to go${rateStr}</div>
+          <div class="goal-eta-sub">~${days} days${rateStr}</div>
         </div>`;
+      }
     }
 
     return `<div class="goal-card ${typeC[g.type] || ''} ${reached ? 'reached' : ''}">
