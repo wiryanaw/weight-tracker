@@ -287,7 +287,8 @@ function renderDash() {
   const modeCls    = { cutting: 'badge-cut', maintenance: 'badge-mnt', bulking: 'badge-blk' };
   setText('dash-badge', `<span class="badge ${modeCls[P.mode]}">${modeLabels[P.mode]}</span>`);
 
-  const logged = E.find(e => e.date === today);
+  const todayEntries = E.filter(e => e.date === today);
+  const logged = todayEntries.length ? todayEntries[todayEntries.length - 1] : null;
   document.getElementById('today-status').innerHTML = logged
     ? `<div class="logged-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Logged today — ${logged.weight} kg</div>`
     : `<div style="font-size:13px;color:var(--mu);margin-bottom:10px">No entry yet today</div>`;
