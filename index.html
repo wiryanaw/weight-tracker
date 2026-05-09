@@ -241,7 +241,7 @@ window.saveSetup = async () => {
   if (!h || !a || !w) { alert('Please fill in all fields.'); return; }
 
   const profile = { height: h, age: a, sex: s, activity: ac, mode: 'cutting',
-    lockMin: false, lockMax: false, lockMinV: 1500, lockMaxV: 2500 };
+  };
   await saveProfile(profile);
 
   // Starting entry
@@ -311,7 +311,7 @@ function renderDash() {
 
   if (cw) {
     const base = calcTDEE(cw, P.height, P.age, P.sex, P.activity);
-    const cal  = modeCal(base, P.mode, P.lockMin, P.lockMinV, P.lockMax, P.lockMaxV);
+    const cal  = modeCal(base, P.mode, false, 0, false, 0);
     const m    = calcMacros(cal, cw, P.mode);
     const mc   = { cutting: 'var(--cut)', maintenance: 'var(--mnt)', bulking: 'var(--blk)' };
     setText('dash-cal', `
@@ -406,12 +406,6 @@ function renderCalc() {
   document.getElementById('c-age').value = P.age;
   document.getElementById('c-sex').value = P.sex;
   document.getElementById('c-act').value = P.activity;
-  document.getElementById('lk-min-t').checked = !!P.lockMin;
-  document.getElementById('lk-max-t').checked = !!P.lockMax;
-  document.getElementById('lk-min-v').value = P.lockMinV || 1500;
-  document.getElementById('lk-max-v').value = P.lockMaxV || 2500;
-  document.getElementById('lk-min-p').style.display = P.lockMin ? 'block' : 'none';
-  document.getElementById('lk-max-p').style.display = P.lockMax ? 'block' : 'none';
   updateCalc();
 }
 
@@ -422,13 +416,6 @@ window.updateCalc = () => {
   const act  = parseFloat(document.getElementById('c-act').value);
   const cw   = curW() || 80;
   const mode = P?.mode || 'cutting';
-  const lmin = document.getElementById('lk-min-t').checked;
-  const lmax = document.getElementById('lk-max-t').checked;
-  const lminV = parseInt(document.getElementById('lk-min-v').value) || 1500;
-  const lmaxV = parseInt(document.getElementById('lk-max-v').value) || 2500;
-  document.getElementById('lk-min-p').style.display = lmin ? 'block' : 'none';
-  document.getElementById('lk-max-p').style.display = lmax ? 'block' : 'none';
-
   const b = calcBMI(cw, h);
   const bn = document.getElementById('c-bmi-n');
   bn.textContent = r1(b); bn.style.color = bmiColor(b);
@@ -442,9 +429,9 @@ window.updateCalc = () => {
     `Ideal range for your height: <strong>${r1(18.5*hm*hm)} – ${r1(24.9*hm*hm)} kg</strong> (optimal ~<strong>${r1(22*hm*hm)} kg</strong>)`;
 
   const base = calcTDEE(cw, h, age, sex, act);
-  const cutC = modeCal(base,'cutting',lmin,lminV,lmax,lmaxV);
-  const mntC = modeCal(base,'maintenance',lmin,lminV,lmax,lmaxV);
-  const blkC = modeCal(base,'bulking',lmin,lminV,lmax,lmaxV);
+  const cutC = modeCal(base,'cutting',false,0,false,0);
+  const mntC = modeCal(base,'maintenance',false,0,false,0);
+  const blkC = modeCal(base,'bulking',false,0,false,0);
   document.getElementById('mt-cut-c').textContent = cutC.toLocaleString()+' kcal';
   document.getElementById('mt-mnt-c').textContent = mntC.toLocaleString()+' kcal';
   document.getElementById('mt-blk-c').textContent = blkC.toLocaleString()+' kcal';
@@ -472,10 +459,6 @@ window.saveProfile = async () => {
     age:      parseInt(document.getElementById('c-age').value)    || P.age,
     sex:      document.getElementById('c-sex').value,
     activity: parseFloat(document.getElementById('c-act').value),
-    lockMin:  document.getElementById('lk-min-t').checked,
-    lockMax:  document.getElementById('lk-max-t').checked,
-    lockMinV: parseInt(document.getElementById('lk-min-v').value) || 1500,
-    lockMaxV: parseInt(document.getElementById('lk-max-v').value) || 2500,
   };
   await saveProfile(updated);
   const btn = document.querySelector('[onclick="saveProfile()"]');
@@ -882,7 +865,6 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(247,247,244,.92);back
 .tog input:checked+.tog-track{background:var(--btn);border-color:var(--btn)}
 .tog-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:var(--sur);border-radius:50%;transition:var(--tr);pointer-events:none;box-shadow:var(--sh)}
 .tog input:checked~.tog-thumb{left:21px}
-.lock-panel{background:var(--s2);border-radius:var(--rs);padding:12px 14px;margin-top:6px}
 
 /* Alert */
 .alert{border-radius:var(--rs);padding:12px 14px;font-size:13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:8px}
@@ -1042,12 +1024,6 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(247,247,244,.92);back
         <div class="macro-item"><div class="macro-val" id="c-carb" style="color:#CA8A04">—g</div><div class="macro-name">Carbs</div><div class="macro-kcal" id="c-carb-c"></div></div>
         <div class="macro-item"><div class="macro-val" id="c-fat" style="color:#9333EA">—g</div><div class="macro-name">Fat</div><div class="macro-kcal" id="c-fat-c"></div></div>
       </div>
-      <div class="divider"></div>
-      <div class="card-label" style="margin-bottom:10px">Calorie Limits</div>
-      <div class="toggle-row"><div><div class="toggle-label">Lock minimum (floor)</div><div class="toggle-sub">Never go below this</div></div><label class="tog"><input type="checkbox" id="lk-min-t" onchange="updateCalc()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
-      <div id="lk-min-p" style="display:none" class="lock-panel"><div class="fg" style="margin:0"><label>Minimum calories</label><input type="number" id="lk-min-v" value="1500" min="1000" max="4000" step="50" oninput="updateCalc()"></div></div>
-      <div class="toggle-row" style="margin-top:10px"><div><div class="toggle-label">Lock maximum (ceiling)</div><div class="toggle-sub">Never go above this</div></div><label class="tog"><input type="checkbox" id="lk-max-t" onchange="updateCalc()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
-      <div id="lk-max-p" style="display:none" class="lock-panel"><div class="fg" style="margin:0"><label>Maximum calories</label><input type="number" id="lk-max-v" value="2500" min="1000" max="5000" step="50" oninput="updateCalc()"></div></div>
     </div>
   </div>
 
