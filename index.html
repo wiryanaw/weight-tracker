@@ -294,6 +294,8 @@ function renderDash() {
 
   setText('s-current', cw ? `${r1(cw)}<span class="stat-unit">kg</span>` : `—<span class="stat-unit">kg</span>`);
   setText('s-bmi', b ? `BMI ${r1(b)}` : '');
+  setText('s-start', sw ? `${r1(sw)}<span class="stat-unit">kg</span>` : `—<span class="stat-unit">kg</span>`);
+  setText('s-start-date', E.length ? fmts(E[0].date) : '');
   if (cw && sw) {
     const lost = r1(sw - cw);
     setText('s-lost', `${Math.abs(lost)}<span class="stat-unit">kg</span>`);
@@ -742,8 +744,9 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(247,247,244,.92);back
 .page-header-row{display:flex;align-items:center;justify-content:space-between}
 
 /* Stats */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
-@media(max-width:500px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px}
+@media(max-width:700px){.stats-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:400px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
 .stat-card{background:var(--sur);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
 .stat-label{font-size:11px;font-weight:500;color:var(--dm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
 .stat-val{font-size:24px;font-weight:700;letter-spacing:-.03em;line-height:1.1;color:var(--tx)}
@@ -957,6 +960,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(247,247,244,.92);back
     </div>
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-label">Current</div><div class="stat-val" id="s-current">—<span class="stat-unit">kg</span></div><div class="stat-sub" id="s-bmi"></div></div>
+      <div class="stat-card"><div class="stat-label">Start</div><div class="stat-val" id="s-start">—<span class="stat-unit">kg</span></div><div class="stat-sub" id="s-start-date"></div></div>
       <div class="stat-card"><div class="stat-label">Total Lost</div><div class="stat-val" id="s-lost">—<span class="stat-unit">kg</span></div><div class="stat-sub" id="s-lost-pct"></div></div>
       <div class="stat-card"><div class="stat-label">Weekly Rate</div><div class="stat-val" id="s-rate">—<span class="stat-unit">kg</span></div><div class="stat-sub">avg/week</div></div>
       <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-val" id="s-streak">0<span class="stat-unit">d</span></div><div class="stat-sub">days logged</div></div>
