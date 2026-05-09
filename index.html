@@ -90,7 +90,8 @@ function subscribeData() {
 
   // Entries
   unsubEntries = onSnapshot(colRef('entries'), snap => {
-    E = snap.docs.map(d => d.data()).sort((a,b) => a.date.localeCompare(b.date));
+    E = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => { const dc = a.date.localeCompare(b.date); return dc !== 0 ? dc : (a.time||'').localeCompare(b.time||''); });
     renderDash();
     if (document.getElementById('tab-log').classList.contains('active')) renderHistory();
     if (document.getElementById('tab-goals').classList.contains('active')) renderGoals();
@@ -108,12 +109,14 @@ async function saveProfile(data) {
   await setDoc(userRef('data/profile'), data);
 }
 
-async function upsertEntry(date, weight, note) {
-  await setDoc(doc(db, `users/${uid}/entries/${date}`), { date, weight, note });
+async function createEntry(date, weight, note) {
+  const id = uid2();
+  const time = new Date().toISOString();
+  await setDoc(doc(db, `users/${uid}/entries/${id}`), { date, time, weight, note });
 }
 
-async function deleteEntry(date) {
-  await deleteDoc(doc(db, `users/${uid}/entries/${date}`));
+async function deleteEntry(id) {
+  await deleteDoc(doc(db, `users/${uid}/entries/${id}`));
 }
 
 async function saveGoal(id, data) {
@@ -144,7 +147,7 @@ const r1    = n  => Math.round(n * 10) / 10;
 const r0    = n  => Math.round(n);
 const fmt   = d  => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 const fmts  = d  => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-const curW  = () => E.length ? E[E.length - 1].weight : null;
+const curW   = () => E.length ? E[E.length - 1].weight : null;
 const startW = () => E.length ? E[0].weight : null;
 
 function calcBMI(w, h) { const m = h / 100; return w / m / m; }
@@ -174,11 +177,18 @@ function calcMacros(cal, w, mode) {
   return { pG, pC, fG, fC, cG, cC };
 }
 
+function dailyW() {
+  const map = {};
+  E.forEach(e => { map[e.date] = e.weight; }); // last entry per day wins (E sorted by date+time)
+  return Object.entries(map).sort((a,b) => a[0].localeCompare(b[0])).map(([date, weight]) => ({ date, weight }));
+}
+
 function weeklyRate() {
-  if (E.length < 2) return null;
-  const n  = E.length;
-  const xs = E.map(e => new Date(e.date + 'T00:00:00').getTime() / 86400000);
-  const ys = E.map(e => e.weight);
+  const D = dailyW();
+  if (D.length < 2) return null;
+  const n  = D.length;
+  const xs = D.map(e => new Date(e.date + 'T00:00:00').getTime() / 86400000);
+  const ys = D.map(e => e.weight);
   const xm = xs.reduce((a,b) => a+b, 0) / n;
   const ym = ys.reduce((a,b) => a+b, 0) / n;
   const num = xs.reduce((s,x,i) => s + (x-xm)*(ys[i]-ym), 0);
@@ -236,7 +246,7 @@ window.saveSetup = async () => {
 
   // Starting entry
   const today = td();
-  await upsertEntry(today, w, 'Starting weight');
+  await createEntry(today, w, 'Starting weight');
 
   // Default goals
   if (!G.length) {
@@ -351,7 +361,7 @@ function renderChart() {
   const canvas = document.getElementById('wc');
   if (!canvas) return;
   if (chartInst) { chartInst.destroy(); chartInst = null; }
-  let data = [...E].sort((a,b) => a.date.localeCompare(b.date));
+  let data = dailyW();
   if (chartRange > 0) {
     const cut = new Date(); cut.setDate(cut.getDate() - chartRange);
     data = data.filter(e => new Date(e.date+'T00:00:00') >= cut);
@@ -479,7 +489,7 @@ window.setMode = async mode => {
 window.quickLog = async () => {
   const w = parseFloat(document.getElementById('quick-w').value);
   if (!w || w < 30 || w > 300) { alert('Enter a valid weight.'); return; }
-  await upsertEntry(td(), w, '');
+  await createEntry(td(), w, '');
   document.getElementById('quick-w').value = '';
 };
 
@@ -488,7 +498,7 @@ window.addEntry = async () => {
   const w    = parseFloat(document.getElementById('log-w').value);
   const note = document.getElementById('log-note').value.trim();
   if (!date || !w || w < 30 || w > 300) { alert('Enter a valid date and weight.'); return; }
-  await upsertEntry(date, w, note);
+  await createEntry(date, w, note);
   document.getElementById('log-note').value = '';
   const btn = document.querySelector('[onclick="addEntry()"]');
   btn.textContent = 'Saved';
@@ -618,30 +628,34 @@ function renderHistory() {
   }
   btn.style.display = '';
   cnt.textContent = `${E.length} ${E.length===1?'entry':'entries'}`;
-  const sorted = [...E].sort((a,b) => b.date.localeCompare(a.date));
+  const dateCounts = {};
+  E.forEach(e => { dateCounts[e.date] = (dateCounts[e.date]||0) + 1; });
+  const sorted = [...E].sort((a,b) => { const dc = b.date.localeCompare(a.date); return dc !== 0 ? dc : (b.time||'').localeCompare(a.time||''); });
   el.innerHTML = sorted.map((e, i) => {
     const prev = sorted[i+1];
     let delta = '', dClass = 'delta-flat';
     if (prev) { const d = r1(e.weight - prev.weight); if (d>0){delta='+'+d;dClass='delta-up';}else if(d<0){delta=String(d);dClass='delta-down';}else delta='—'; }
+    const showTime = dateCounts[e.date] > 1 && e.time;
+    const timeStr = showTime ? new Date(e.time).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : '';
     return `<div class="hist-item">
-      <div class="hist-date">${fmts(e.date)}</div>
+      <div class="hist-date">${fmts(e.date)}${showTime ? `<div style="font-size:11px;color:var(--mu);margin-top:2px">${timeStr}</div>` : ''}</div>
       <div><div class="hist-weight">${e.weight} kg</div>${e.note?`<div class="hist-note">${e.note}</div>`:''}</div>
       <div class="hist-delta ${dClass}">${delta}</div>
-      <button class="btn-danger btn-sm" onclick="delEntry('${e.date}')" style="padding:6px;min-height:0">
+      <button class="btn-danger btn-sm" onclick="delEntry('${e.id}')" style="padding:6px;min-height:0">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>`;
   }).join('');
 }
 
-window.delEntry = async date => {
-  if (!confirm(`Delete entry for ${fmt(date)}?`)) return;
-  await deleteEntry(date);
+window.delEntry = async id => {
+  if (!confirm('Delete this entry?')) return;
+  await deleteEntry(id);
 };
 
 window.clearAll = async () => {
   if (!confirm('Delete ALL entries? This cannot be undone.')) return;
-  await Promise.all(E.map(e => deleteEntry(e.date)));
+  await Promise.all(E.map(e => deleteEntry(e.id)));
 };
 
 // init
