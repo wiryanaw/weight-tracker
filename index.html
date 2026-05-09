@@ -64,8 +64,8 @@ window.signInGoogle = async () => {
   }
 };
 
-window.signOutUser = async () => {
-  await signOut(auth);
+window.signOutUser = () => {
+  showConfirm('Sign out?', 'You will be signed out of Weight Tracker.', () => signOut(auth));
 };
 
 // ─── Firestore helpers ────────────────────────────────────────────────────────
