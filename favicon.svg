@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" shape-rendering="geometricPrecision">
+<defs>
+  <!-- Background: deep indigo → dark navy -->
+  <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+    <stop offset="0%" stop-color="#7C3AED"/>
+    <stop offset="55%" stop-color="#4F46E5"/>
+    <stop offset="100%" stop-color="#1E1B4B"/>
+  </linearGradient>
+
+  <!-- Glass sheen: bright at top, fades out -->
+  <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="320" gradientUnits="userSpaceOnUse">
+    <stop offset="0%" stop-color="white" stop-opacity="0.28"/>
+    <stop offset="100%" stop-color="white" stop-opacity="0"/>
+  </linearGradient>
+
+  <!-- Bottom vignette -->
+  <linearGradient id="vignette" x1="0" y1="220" x2="0" y2="512" gradientUnits="userSpaceOnUse">
+    <stop offset="0%" stop-color="black" stop-opacity="0"/>
+    <stop offset="100%" stop-color="black" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- Pan radial gradient (3D bowl highlight) -->
+  <radialGradient id="panGrad" cx="38%" cy="30%" r="65%">
+    <stop offset="0%" stop-color="#FFFFFF"/>
+    <stop offset="100%" stop-color="#C4B5FD"/>
+  </radialGradient>
+
+  <!-- Scale parts gradient -->
+  <linearGradient id="scaleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%" stop-color="#FFFFFF"/>
+    <stop offset="100%" stop-color="#DDD6FE"/>
+  </linearGradient>
+
+  <!-- Drop shadow for scale -->
+  <filter id="scaleShadow" x="-25%" y="-25%" width="150%" height="150%">
+    <feDropShadow dx="0" dy="14" stdDeviation="20" flood-color="#1e1b4b" flood-opacity="0.55"/>
+  </filter>
+
+  <!-- Softer shadow for pans -->
+  <filter id="panShadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#1e1b4b" flood-opacity="0.45"/>
+  </filter>
+
+  <!-- Clip to rounded rect -->
+  <clipPath id="iconClip">
+    <rect width="512" height="512" rx="112"/>
+  </clipPath>
+</defs>
+
+<g clip-path="url(#iconClip)">
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- Glass sheen overlay -->
+  <rect width="512" height="512" fill="url(#sheen)"/>
+  <!-- Bottom vignette -->
+  <rect width="512" height="512" fill="url(#vignette)"/>
+
+  <!-- ── SCALE ─────────────────────────────────────────────── -->
+  <g filter="url(#scaleShadow)">
+    <!-- Base plate -->
+    <rect x="182" y="412" width="148" height="26" rx="13" fill="url(#scaleGrad)"/>
+
+    <!-- Center pole -->
+    <rect x="243" y="192" width="26" height="232" rx="13" fill="url(#scaleGrad)"/>
+
+    <!-- Beam -->
+    <rect x="72" y="181" width="368" height="24" rx="12" fill="url(#scaleGrad)"/>
+  </g>
+
+  <!-- Center pivot circle -->
+  <circle cx="256" cy="193" r="32" fill="white" filter="url(#scaleShadow)"/>
+  <circle cx="256" cy="193" r="18" fill="#7C3AED"/>
+  <!-- Pivot specular dot -->
+  <circle cx="249" cy="186" r="6" fill="white" opacity="0.55"/>
+
+  <!-- ── LEFT PAN (lower) ───────────────────────────────────── -->
+  <!-- Chain -->
+  <rect x="83" y="205" width="12" height="90" rx="6" fill="white" opacity="0.8" filter="url(#scaleShadow)"/>
+  <!-- Bowl body -->
+  <path d="M41,295 L137,295 L120,358 Q109,374 89,374 Q69,374 58,358 Z"
+        fill="url(#panGrad)" filter="url(#panShadow)"/>
+  <!-- Rim ellipse -->
+  <ellipse cx="89" cy="295" rx="48" ry="9" fill="white"/>
+  <!-- Inner bowl shadow -->
+  <ellipse cx="89" cy="310" rx="30" ry="5" fill="#A78BFA" opacity="0.35"/>
+
+  <!-- ── RIGHT PAN (higher) ─────────────────────────────────── -->
+  <!-- Chain -->
+  <rect x="417" y="205" width="12" height="68" rx="6" fill="white" opacity="0.8" filter="url(#scaleShadow)"/>
+  <!-- Bowl body -->
+  <path d="M383,273 L467,273 L452,334 Q442,350 423,350 Q404,350 394,334 Z"
+        fill="url(#panGrad)" filter="url(#panShadow)"/>
+  <!-- Rim ellipse -->
+  <ellipse cx="425" cy="273" rx="42" ry="8" fill="white"/>
+  <!-- Inner bowl shadow -->
+  <ellipse cx="425" cy="287" rx="26" ry="4.5" fill="#A78BFA" opacity="0.35"/>
+
+  <!-- ── HIGHLIGHT PILL (glass button top edge) ─────────────── -->
+  <rect x="156" y="42" width="200" height="36" rx="18"
+        fill="white" opacity="0.14"/>
+</g>
+</svg>

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Weight Tracker</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2318181B'/%3E%3Cg transform='translate(4,4)' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'%3E%3Cpath d='m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z'/%3E%3Cpath d='m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z'/%3E%3Cpath d='M7 21H17'/%3E%3Cpath d='M12 3v18'/%3E%3Cpath d='M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -692,8 +692,7 @@ button:focus-visible{outline:2px solid var(--btn);outline-offset:2px}
 /* Login screen */
 #login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;z-index:200}
 .login-box{background:var(--sur);border:1px solid var(--bd);border-radius:var(--rl);padding:40px 36px;width:100%;max-width:400px;text-align:center;box-shadow:var(--sh2)}
-.login-logo{width:48px;height:48px;background:var(--btn);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
-.login-logo svg{color:#fff}
+.login-logo{width:72px;height:72px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center}
 .login-title{font-size:22px;font-weight:700;letter-spacing:-.03em;margin-bottom:8px}
 .login-sub{font-size:14px;color:var(--mu);margin-bottom:28px;line-height:1.5}
 #signin-btn{width:100%;padding:14px;font-size:15px;min-height:52px;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--sur);border:1px solid var(--bd);color:var(--tx);font-weight:500}
@@ -901,7 +900,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(247,247,244,.92);back
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21H17"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+      <img src="favicon.svg" width="64" height="64" alt="Weight Tracker" style="border-radius:16px;display:block"/>
     </div>
     <div class="login-title">Weight Tracker</div>
     <div class="login-sub">Track your weight, hit your goals.<br>Sign in to sync across all your devices.</div>
